@@ -1,0 +1,486 @@
+
+
+*** BlockMeshDict :ATTACH:
+    :PROPERTIES:
+    :Attachments: user55x.png
+    :ID:       3737b61b-c2cd-484d-a81a-8dd18d62751e
+    :END:
+
+So we're trying to create a simple block shaped region. The only catch is that:
+ - the block will have changing lengths (depending on the length of the pod)
+ - the block is effectively 2D in function, which affects how we choose the grading of the cells
+
+We'll be doing a bit of trickery with Python and tables for now.
+
+[[file:data/37/37b61b-c2cd-484d-a81a-8dd18d62751e/user55x.png]]
+
+#+NAME: blockMeshDict
+#+BEGIN_SRC C :noweb yes :noweb no-export :exports code :tangle openfoam/system/blockMeshDict
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  6
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+<<blockMeshDict_convertToMeters>>
+<<blockMeshDict_vertices>>
+<<blockMeshDict_blocks>>
+<<blockMeshDict_edges>>
+<<blockMeshDict_boundary>>
+<<blockMeshDict_mergePatchPairs>>
+
+// ************************************************************************* //
+#+END_SRC
+
+**** convertToMeters
+
+Since we're doing everything to scale, there is no need to upsize or downsize any dimension.
+#+NAME: blockMeshDict_convertToMeters
+#+BEGIN_SRC C
+convertToMeters 1;
+#+END_SRC
+
+**** vertices
+
+| x | thickness | ~0.5~           |
+| y | height    | ~tube_radius~   |
+| z | length    | ~tube_length/2~ |
+
+#+BEGIN_SRC ipython :session paper :results raw drawer :noweb yes :noweb no-export
+
+<<vertex>>
+<<vertices>>
+
+x = 0.5
+y = combination_magnitude["tube_radius"]/2
+z = combination_magnitude["tube_length"]/2
+
+vertices = [Vertex(-x,-y,-z),    # - - - 
+            Vertex( x,-y,-z),    #   - - 
+            Vertex( x, y,-z),    #     -
+            Vertex(-x, y,-z),    # -   - 
+            Vertex(-x,-y, z),    # - -  
+            Vertex( x,-y, z),    #   -  
+            Vertex( x, y, z),    #      
+            Vertex(-x, y, z)]    # -    
+
+vertex_list = Vertices(vertices=vertices)
+vertex_list
+#+END_SRC
+
+#+RESULTS:
+:RESULTS:
+# Out[119]:
+#+BEGIN_EXAMPLE
+  vertices
+  (
+  (-0.5 -0.9144 -10.0) // 0
+  (0.5 -0.9144 -10.0) // 1
+  (0.5 0.9144 -10.0) // 2
+  (-0.5 0.9144 -10.0) // 3
+  (-0.5 -0.9144 10.0) // 4
+  (0.5 -0.9144 10.0) // 5
+  (0.5 0.9144 10.0) // 6
+  (-0.5 0.9144 10.0) // 7
+  )
+#+END_EXAMPLE
+:END:
+
+
+***** Vertex
+#+NAME: vertex
+#+BEGIN_SRC python
+from collections.abc import MutableMapping
+class Vertex(MutableMapping):
+    def __init__(self, x=None, y=None, z=None, name=None, *args, **kw):
+        if x is None or y is None or z is None:
+            raise ValueError("(x,y,z) cannot contain null values")
+        self._storage = dict(x=x,y=y,z=z,name=name,*args, **kw)
+        self.x = self._storage["x"]
+        self.y = self._storage["y"]
+        self.z = self._storage["z"]
+        self.name = self._storage["name"]
+
+    def __getitem__(self, key):
+        return self._storage[key]
+    def __setitem__(self, key, value):
+        self._storage[key] = value
+    def __delitem__(self, key):
+        del self._storage[key]
+    def __len__(self):
+        return len(self._storage)
+    def __iter__(self):
+        return iter(self._storage) 
+    def __len__(self):
+        return len(self._storage)
+    def __repr__(self):
+        string = "("+str(self["x"])+" "+str(self["y"])+" "+str(self["z"])+")"
+        return string
+    def __eq__(self, other):
+        if type(other) is type(self):
+            if self["x"] is other["x"] and self["y"] is other["y"] and self["z"] is other["z"]:
+               return True
+        else:
+            return False
+
+#+END_SRC
+
+
+***** Vertices
+
+#+NAME: vertices
+#+BEGIN_SRC python
+from collections import deque, defaultdict
+class Borg:
+    _shared_state = {}
+    def __init__(self):
+        self.__dict__ = self._shared_state
+
+class Vertices(Borg):
+    def __init__(self, vertices=(), maxlen=None):
+        Borg.__init__(self)
+        self._storage = deque(vertices)
+        self.lib = defaultdict(dict)
+
+    def __getitem__(self, vertex):
+        if type(vertex) is type(Vertex(0,0,0)):
+            return self._storage.index(vertex)
+        else:
+            return self._storage[vertex]
+    def __iter__(self):
+        return iter(self._storage) 
+    def __repr__(self):
+        for i,vertex in enumerate(self._storage):
+            vertex["name"] = str(i)
+        string = "vertices\n(\n     " + "\n     ".join([str(vertex) + " // " + vertex["name"] for vertex in self._storage]) + "\n)"
+        return string
+#+END_SRC
+
+
+
+
+**** blocks
+
+So in OpenFOAM, we define a block by listing its vertices in a specific order. The way that OpenFOAM orders its vertices, which is a surprisingly common way of numbering vertices, is with the bottom vertices numbered in counter-clockwise order followed by the top vertices in counter-clockwise order:
+#+BEGIN_EXAMPLE
+        7-------6
+       /|      /|
+      4-+-----5 | 
+      | |     | |   y
+      | 3-----+-2   | z
+      |/      |/    |/
+      0-------1     +--x
+#+END_EXAMPLE
+
+Since I haven't (yet) found a way to get a formula that spits out a unique-ish hexahedron given some vertices, I'm forced to make the user input all vertices in the right order (manually). However, I'll have plenty of tests to ensure that odd bugs don't appear (as much as possible). 
+
+
+#+BEGIN_SRC ipython :session paper :noweb yes :noweb no-export
+<<hexahedron>>
+<<numberOfCells>>
+numberCells = NumberOfCells(2,2,2)
+block = Hexahedron(vertex_list[0],vertex_list[1],
+                   vertex_list[2],vertex_list[3],
+                   vertex_list[4],vertex_list[5],
+                   vertex_list[6],vertex_list[7],
+                   numberCells)
+
+block
+#+END_SRC
+
+#+RESULTS:
+: # Out[116]:
+: : hex 0 1 2 3 4 5 6 7 (2 2 2)
+***** Hexahedron
+#+NAME: hexahedron
+#+BEGIN_SRC python
+from collections.abc import Mapping
+class Hexahedron(Mapping):
+    def __init__(self,v0,v1,v2,v3,v4,v5,v6,v7,numberOfCells,*args,**kw):
+    
+        # Tests or Assertions here to ensure that everything makes sense.
+        # Will do later
+        self._storage = dict(v0=v0,v1=v1,v2=v2,v3=v3,
+                             v4=v4,v5=v5,v6=v6,v7=v7,
+                             numberOfCells=numberOfCells,
+                             *args,**kw) 
+    def __getitem__(self, key):
+        return self._storage[key]
+    def __iter__(self):
+        return iter(self._storage) 
+    def __len__(self):
+        return len(self._storage)
+    def __repr__(self):
+        list_of_vertices = [self["v0"],self["v1"],self["v2"],self["v3"],
+                            self["v4"],self["v5"],self["v6"],self["v7"]]
+        #print(self["v0"]["name"])
+        prefix_string = "hex"
+        vertex_string = " ".join([vertex["name"] for vertex in list_of_vertices])
+        numberCells_string = str(self["numberOfCells"])
+        return " ".join([prefix_string,vertex_string,numberCells_string])
+#+END_SRC
+
+#+RESULTS:
+: # Out[113]:
+
+***** Edge
+#+BEGIN_SRC python
+
+class Edge(object):
+    
+
+#+END_SRC
+***** NumberOfCells
+
+The second entry gives the number of cells in each of the x1 x2 and x3 directions for that block. 
+
+#+NAME: numberOfCells
+#+BEGIN_SRC python
+from collections.abc import MutableMapping
+class NumberOfCells(MutableMapping):
+    def __init__(self, x=None, y=None, z=None, name=None, *args, **kw):
+        if x is None or y is None or z is None:
+            raise ValueError("(x,y,z) cannot contain null values")
+        self._storage = dict(x=x,y=y,z=z,name=name,*args, **kw)
+        self.x = self._storage["x"]
+        self.y = self._storage["y"]
+        self.z = self._storage["z"]
+        self.name = self._storage["name"]
+
+    def __getitem__(self, key):
+        return self._storage[key]
+    def __setitem__(self, key, value):
+        self._storage[key] = value
+    def __delitem__(self, key):
+        del self._storage[key]
+    def __len__(self):
+        return len(self._storage)
+    def __iter__(self):
+        return iter(self._storage) 
+    def __len__(self):
+        return len(self._storage)
+    def __repr__(self):
+        string = "("+str(self["x"])+" "+str(self["y"])+" "+str(self["z"])+")"
+        return string
+    def __eq__(self, other):
+        if type(other) is type(self):
+            if self["x"] is other["x"] and self["y"] is other["y"] and self["z"] is other["z"]:
+               return True
+        else:
+            return False
+#+END_SRC
+
+
+#+NAME: blockMeshDict_blocks
+#+BEGIN_SRC C
+blocks
+(
+    hex (0 1 5 4 0 1 13 12) (15 15 1) simpleGrading (1 1 1)
+    hex (2 3 7 6 2 3 15 14) (20 20 1) simpleGrading (2 0.25 1)
+    hex (4 5 9 8 12 13 17 16) (15 15 1) simpleGrading (1 1 1)
+    hex (5 6 10 9 13 14 18 17) (50 15 1) simpleGrading (1 1 1)
+    hex (6 7 11 10 14 15 19 18) (20 15 1) simpleGrading (2 1 1)
+);
+#+END_SRC
+
+***** Grading
+
+#+NAME: grading
+#+BEGIN_SRC python
+from collections.abc import MutableMapping
+class SimpleGrading(MutableMapping):
+    def __init__(self, x=None, y=None, z=None, name=None, *args, **kw):
+        if x is None or y is None or z is None:
+            raise ValueError("(x,y,z) cannot contain null values")
+        self._storage = dict(x=x,y=y,z=z,name=name,*args, **kw)
+        self.x = self._storage["x"]
+        self.y = self._storage["y"]
+        self.z = self._storage["z"]
+        self.name = self._storage["name"]
+
+    def __getitem__(self, key):
+        return self._storage[key]
+    def __setitem__(self, key, value):
+        self._storage[key] = value
+    def __delitem__(self, key):
+        del self._storage[key]
+    def __len__(self):
+        return len(self._storage)
+    def __iter__(self):
+        return iter(self._storage) 
+    def __len__(self):
+        return len(self._storage)
+    def __repr__(self):
+        string = "simpleGrading ("+str(self["x"])+" "+str(self["y"])+" "+str(self["z"])+")"
+        return string
+    def __eq__(self, other):
+        if type(other) is type(self):
+            if self["x"] is other["x"] and self["y"] is other["y"] and self["z"] is other["z"]:
+               return True
+        else:
+            return False
+
+class EdgeGrading(MutableMapping):
+    def __init__(self, x0=None, 
+                       x1=None,
+                       x2=None,
+                       x3=None,
+                       x4=None,
+                       x5=None,
+                       x6=None,
+                       x7=None,
+                       x8=None,
+                       x9=None,
+                       x10=None,
+                       x11=None,
+                       *args, **kw):
+        self._storage = dict(x0=x0,
+                             x1=None,
+                             x2=None,
+                             x3=None,
+                             x4=None,
+                             x5=None,
+                             x6=None,
+                             x7=None,
+                             x8=None,
+                             x9=None,
+                             x10=None,
+                             x11=None,
+                             *args, **kw)
+
+    def __getitem__(self, key):
+        return self._storage[key]
+    def __setitem__(self, key, value):
+        self._storage[key] = value
+    def __delitem__(self, key):
+        del self._storage[key]
+    def __len__(self):
+        return len(self._storage)
+    def __iter__(self):
+        return iter(self._storage) 
+    def __len__(self):
+        return len(self._storage)
+    def __repr__(self):
+        string = "simpleGrading (" +  + ")"
+        return string
+    def __eq__(self, other):
+        if type(other) is type(self):
+            if self["x"] is other["x"] and self["y"] is other["y"] and self["z"] is other["z"]:
+               return True
+        else:
+            return False
+#+END_SRC
+
+
+**** edges
+#+CAPTION: Example of edges list
+#+BEGIN_SRC C
+edges
+(
+);
+#+END_SRC
+
+**** boundary
+#+NAME: blockMeshDict_boundary
+#+BEGIN_SRC C
+boundary
+(
+    movingWall
+    {
+        type wall;
+        faces
+        (
+            (1 5 13 1)
+            (5 6 14 13)
+            (2 2 14 6)
+        );
+    }
+    farFieldMoving
+    {
+        type patch;
+        faces
+        (
+            (9 17 18 10)
+        );
+    }
+    fixedWall
+    {
+        type wall;
+        faces
+        (
+            (3 7 15 3)
+            (7 11 19 15)
+        );
+    }
+    axis
+    {
+        type empty;
+        faces
+        (
+            (0 1 1 0)
+            (2 3 3 2)
+        );
+    }
+    left
+    {
+        type patch;
+        faces
+        (
+            (0 0 12 4)
+            (4 12 16 8)
+        );
+    }
+    farField
+    {
+        type patch;
+        faces
+        (
+            (8 16 17 9)
+            (10 18 19 11)
+        );
+    }
+    back
+    {
+        type wedge;
+        faces
+        (
+            (0 4 5 1)
+            (2 6 7 3)
+            (4 8 9 5)
+            (5 9 10 6)
+            (6 10 11 7)
+        );
+    }
+    front
+    {
+        type wedge;
+        faces
+        (
+            (0 1 13 12)
+            (2 3 15 14)
+            (12 13 17 16)
+            (13 14 18 17)
+            (14 15 19 18)
+        );
+    }
+);
+#+END_SRC
+**** mergePatchPairs
+#+NAME: blockMeshDict_mergePatchPairs
+#+BEGIN_SRC C
+mergePatchPairs
+(
+);
+#+END_SRC
+
+
