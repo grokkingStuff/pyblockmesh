@@ -15,7 +15,7 @@ We'll be doing a bit of trickery with Python and tables for now.
 [[file:data/37/37b61b-c2cd-484d-a81a-8dd18d62751e/user55x.png]]
 
 #+NAME: blockMeshDict
-#+BEGIN_SRC C :noweb yes :noweb no-export :exports code :tangle openfoam/system/blockMeshDict
+#+BEGIN_SRC C :noweb yes :noweb no-export :exports code 
 /*--------------------------------*- C++ -*----------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
@@ -99,7 +99,7 @@ vertex_list
 
 ***** Vertex
 #+NAME: vertex
-#+BEGIN_SRC python
+#+BEGIN_SRC python :tangle pyBlockMesh/Vertex.py
 from collections.abc import MutableMapping
 class Vertex(MutableMapping):
     def __init__(self, x=None, y=None, z=None, name=None, *args, **kw):
@@ -120,7 +120,7 @@ class Vertex(MutableMapping):
     def __len__(self):
         return len(self._storage)
     def __iter__(self):
-        return iter(self._storage) 
+        return iter(self._storage)
     def __len__(self):
         return len(self._storage)
     def __repr__(self):
