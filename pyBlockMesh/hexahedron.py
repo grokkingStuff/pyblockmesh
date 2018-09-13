@@ -2,6 +2,8 @@ import vertex as v
 import edge as e
 
 from collections.abc import MutableMapping
+from collections import deque
+
 class Hexahedron(MutableMapping):
     instances = []
 
@@ -23,6 +25,7 @@ class Hexahedron(MutableMapping):
         self._storage["vertices"][7] = vertices[7]
 
         self._storage["edges"] = {}
+        self._storage["faces"] = []
         Hexahedron.instances.append(self)
 
     def __getitem__(self, key):
@@ -44,6 +47,64 @@ class Hexahedron(MutableMapping):
         vertex_string = " ".join([vertex["name"] for vertex in list_of_vertices])
         numberCells_string = "( " + " ".join(str(i) for i in self["numberOfCells"]) + " )"
         return " ".join([prefix_string,vertex_string,numberCells_string])
+
+    def add_face(self,*args,**kwargs):
+        face = f.Face(*args,**kwargs)
+        list_of_vertices = [self["vertices"][0],self["vertices"][1],self["vertices"][2],self["vertices"][3],
+                            self["vertices"][4],self["vertices"][5],self["vertices"][6],self["vertices"][7]]
+
+        # Ensure that the vertices are actually part of the hexahedron. This is important enough for us to throw an error.
+        try:
+            indexv0 = list_of_vertices.index(face["vertices"][0])
+            indexv1 = list_of_vertices.index(face["vertices"][1])
+            indexv2 = list_of_vertices.index(face["vertices"][2])
+            indexv3 = list_of_vertices.index(face["vertices"][3])
+
+        except ValueError:
+            raise ValueError("The vertices given are not part of the hexahedron. Please check your vertices")
+
+        # Now that we know that the vertices are actually part of the hexahedron, it is time to check if it is a valid face
+        possible_faces = [[ list_of_vertices[0], list_of_vertices[3], list_of_vertices[2], list_of_vertices[1] ],
+                          [ list_of_vertices[5], list_of_vertices[6], list_of_vertices[7], list_of_vertices[4] ],
+                          [ list_of_vertices[0], list_of_vertices[4], list_of_vertices[7], list_of_vertices[3] ],
+                          [ list_of_vertices[1], list_of_vertices[2], list_of_vertices[6], list_of_vertices[5] ],
+                          [ list_of_vertices[0], list_of_vertices[1], list_of_vertices[5], list_of_vertices[4] ],
+                          [ list_of_vertices[3], list_of_vertices[1], list_of_vertices[6], list_of_vertices[7] ]]
+
+        temp = False
+        for possible_face in possible_faces:
+            if set(face["vertices"]) == set(possible_face):
+                # We've selected a face with similar elements to our index_list
+                # So we return the list as it is
+                face["vertices"] = possible_face # A properly formatted list everytime
+                temp = True
+
+        # If we can't find similar faces, it does not exist.
+        if temp is False:
+            raise ValueError("Vertices given do not form a face. Please give valid vertices (they must all be adjacent to each other)")
+
+        # At this stage, we have a face where the vertices are correctly formatted.
+        # Now we need to check if a face with the same vertices exist and if so, raise a ValueError
+        # If not, we add to the list
+
+        # Sort the current list by order of vertices. Not that intensive and is qsort behind the scenes
+        self["face"] = sorted(self["face"], key=lambda k: set(k['vertices']))
+
+        match = list(filter(lambda x: x['vertices'] == face["vertices"], self['face']))
+        if match is []:
+            # Awesome! You have a brand new face
+            self['face'].append(face)
+        else:
+            raise ValueError("Face already exists with those vertices")
+
+
+
+
+
+
+
+
+
 
     def add_edge(self,*args,**kwargs):
         edge = e.Edge(*args,**kwargs)
