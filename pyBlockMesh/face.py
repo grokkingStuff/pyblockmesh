@@ -10,16 +10,15 @@ class Face(MutableMapping):
 
     def __init__(self,vertices=[],
                  name=None,
-                 patchType='patch',
+                 patchType=None,
                  *args, **kw):
 
         if vertices is []:
             raise ValueError("In order to define a face, you must provide vertices")
         if name is None:
             raise ValueError("A face must have a name")
-        if patchType not in Face.patchTypes._member_names_:
-            raise ValueError("patchType must be a valid patch type")
-
+        if patchType is None:
+            patchType = 'patch'
 
         self._storage = dict(patchType=patchType,
                              name=name,
@@ -56,6 +55,12 @@ class Face(MutableMapping):
     def __repr__(self):
         faceName = self["name"]
         patchString = self["patchType"]
-        verticesNumberString = "( " + " ".join([vertex["name"] for vertex in [self["vertices"][i] for i in range(0,4)]]) + " )"
+        verticesNumberString = "( " + " ".join([str(vertex["name"]) for vertex in [self["vertices"][i] for i in range(0,4)]]) + " )"
         string = faceName + "\n{\n    type " + patchString + ";\n    faces\n    (\n        " + verticesNumberString + " \n    );\n}"
         return string
+
+    @classmethod
+    def list_all(cls):
+        string = "\nboundary\n(" + "\n" + "\n".join([str(face) for face in cls.instances]) + "\n)"
+        return string
+

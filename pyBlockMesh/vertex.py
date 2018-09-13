@@ -39,6 +39,31 @@ class Vertex(MutableMapping):
         return Vertex(self["x"] - other["x"],
                       self["y"] - other["y"],
                       self["z"] - other["z"])
+    def __lt__(self,other):
+        x = self["x"] < other["x"]
+        y = self["y"] < other["y"]
+        z = self["z"] < other["z"]
+
+        x1 = self["x"] == other["x"]
+        y1 = self["y"] == other["y"]
+        z1 = self["z"] == other["z"]
+
+        if x and not x1:
+            return True
+        elif x1:
+            if y and not y1:
+                return True
+            elif y1:
+                if z and not z1:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        else:
+            return False
+
+
 
     @classmethod
     def list_all(cls):

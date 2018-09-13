@@ -1,5 +1,6 @@
 import vertex as v
 import edge as e
+import face as f
 
 from collections.abc import MutableMapping
 from collections import deque
@@ -49,18 +50,25 @@ class Hexahedron(MutableMapping):
         return " ".join([prefix_string,vertex_string,numberCells_string])
 
     def add_face(self,*args,**kwargs):
-        face = f.Face(*args,**kwargs)
-        list_of_vertices = [self["vertices"][0],self["vertices"][1],self["vertices"][2],self["vertices"][3],
-                            self["vertices"][4],self["vertices"][5],self["vertices"][6],self["vertices"][7]]
-
+        try:
+            face = f.Face(*args,**kwargs)
+        except:
+            ValueError("Face Creation Failed")
+        list_of_vertices =  [self["vertices"][0],
+                             self["vertices"][1],
+                             self["vertices"][2],
+                             self["vertices"][3],
+                             self["vertices"][4],
+                             self["vertices"][5],
+                             self["vertices"][6],
+                             self["vertices"][7]]
         # Ensure that the vertices are actually part of the hexahedron. This is important enough for us to throw an error.
         try:
             indexv0 = list_of_vertices.index(face["vertices"][0])
             indexv1 = list_of_vertices.index(face["vertices"][1])
             indexv2 = list_of_vertices.index(face["vertices"][2])
             indexv3 = list_of_vertices.index(face["vertices"][3])
-
-        except ValueError:
+        except:
             raise ValueError("The vertices given are not part of the hexahedron. Please check your vertices")
 
         # Now that we know that the vertices are actually part of the hexahedron, it is time to check if it is a valid face
@@ -72,11 +80,18 @@ class Hexahedron(MutableMapping):
                           [ list_of_vertices[3], list_of_vertices[1], list_of_vertices[6], list_of_vertices[7] ]]
 
         temp = False
+        face_vertices = [face['vertices'][0],face['vertices'][1],face['vertices'][2],face['vertices'][3]]
         for possible_face in possible_faces:
-            if set(face["vertices"]) == set(possible_face):
+            if sorted(face_vertices) == sorted(possible_face):
                 # We've selected a face with similar elements to our index_list
                 # So we return the list as it is
-                face["vertices"] = possible_face # A properly formatted list everytime
+
+                face["vertices"][0] = possible_face[0]
+                face["vertices"][1] = possible_face[1]
+                face["vertices"][2] = possible_face[2]
+                face["vertices"][3] = possible_face[3]
+
+
                 temp = True
 
         # If we can't find similar faces, it does not exist.
@@ -88,13 +103,14 @@ class Hexahedron(MutableMapping):
         # If not, we add to the list
 
         # Sort the current list by order of vertices. Not that intensive and is qsort behind the scenes
-        self["face"] = sorted(self["face"], key=lambda k: set(k['vertices']))
+        self["faces"] = sorted(self["faces"], key=lambda k: set(k['vertices']))
 
-        match = list(filter(lambda x: x['vertices'] == face["vertices"], self['face']))
-        if match is []:
+        match = list(filter(lambda x: x['vertices'] == face["vertices"], self['faces']))
+        if match == []:
             # Awesome! You have a brand new face
-            self['face'].append(face)
+            self['faces'].append(face)
         else:
+            print(match)
             raise ValueError("Face already exists with those vertices")
 
 
@@ -163,3 +179,4 @@ class Hexahedron(MutableMapping):
     def list_all(cls):
         string = "\nblocks\n(" + "\n    " + "\n    ".join([str(hexahedron) for hexahedron in cls.instances]) + "\n)"
         return string
+
