@@ -1,0 +1,64 @@
+#+TITLE: pyblockmesh
+#+AUTHOR: Vishakh Pradeep Kumar
+#+EMAIL: grokkingStuff@gmail.com
+
+Python Library 
+
+#+BEGIN_SRC sh :exports results
+.
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── index.org
+├── LICENSE
+├── pyblockmesh
+│   ├── edge.py
+│   ├── face.py
+│   ├── hexahedron.py
+│   ├── __init__.py
+│   └── vertex.py
+├── pytest.ini
+├── README.md
+├── README.org
+├── requirements.txt
+├── script
+│   └── test
+├── setup.py
+└── tests
+    ├── helpers
+    │   ├── __init__.py
+    │   └── my_helper.py
+    ├── __init__.py
+    ├── tests_helper.py
+    └── unit
+        ├── __init__.py
+        ├── test_example.py
+        └── test_version.py
+
+5 directories, 22 files
+#+END_SRC
+
+* Example
+
+
+#+BEGIN_SRC py
+import pyblockmesh as pbm
+v0 = pbm.Vertex(-1,-1,-1)
+v1 = pbm.Vertex( 1,-1,-1)
+v2 = pbm.Vertex( 1, 1,-1)
+v3 = pbm.Vertex(-1, 1,-1)
+v4 = pbm.Vertex(-1,-1, 1)
+v5 = pbm.Vertex( 1,-1, 1)
+v6 = pbm.Vertex( 1, 1, 1)
+v6 = pbm.Vertex(-1, 1, 1)
+
+h1 = pbm.Hexahedron([v0,v1,v2,v3,v4,v5,v6,v7])
+#+END_SRC
+
+* Requirements
+
+Package requirements are handled using pip. To install them do
+
+#+BEGIN_SRC sh
+pip install -r requirements.txt
+#+END_SRC
+
