@@ -44,3 +44,8 @@ class Vertex(MutableMapping):
     def list_all(cls):
         string = "\nvertices\n(" + "\n    " + "\n    ".join([str(vertex) for vertex in cls.instances]) + "\n)"
         return string
+
+    @classmethod
+    def assign_names(cls):
+        for i,vertex in enumerate(cls.instances):
+            vertex["name"] = str(i)

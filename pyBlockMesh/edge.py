@@ -19,21 +19,21 @@ class Edge(MutableMapping):
 
         self._storage = dict(vertex1 = vertex1,
                              vertex2 = vertex2,
-                             expansionRatio = expansionRatio
-                             keyword = keyword
+                             expansionRatio = expansionRatio,
+                             keyword = keyword,
                              *args,**kwargs)
 
         # Assign expansionRatio
         if expansionRatio is None:
             self["expansionRatio"] = 1
         else:
-            self.["expansionRatio"] = expansionRatio
+            self["expansionRatio"] = expansionRatio
 
         # Default keyword is 'line'
         # The interpolation points are vertices
         if keyword is None:
             self["keyword"] = Edge.edgeTypes.line.name
-            self.["interpolationPoints"] = []
+            self["interpolationPoints"] = []
         elif keyword not in Edge.edgeTypes._member_names_:
             raise ValueError("keyword must be a valid edge type")
         else:
@@ -53,12 +53,16 @@ class Edge(MutableMapping):
     def __len__(self):
         return len(self._storage)
     def __repr__(self):
-        edgeType = self["keyword"]
-        v1Name = str(self["vertex1"]["name"])
-        v2Name = str(self["vertex2"]["name"])
+        edge = self["keyword"]
+        v1Name = self["vertex1"]["name"]
+        v2Name = self["vertex2"]["name"]
+
+        if v1Name == None or v2Name == None:
+            raise ValueError("vertices must have names before they can be represented")
+
 
         if type(self["interpolationPoints"]) is type([]):
-            if self["interpolationPoints"] is not []:
+            if self["interpolationPoints"] != []:
                 # Multiple interpolation points
                 points = "( " + " ".join([str(point) for point in self["interpolationPoints"]]) + " )"
             else:
@@ -67,9 +71,8 @@ class Edge(MutableMapping):
         else:
             # Single interpolationPoint
             points = str(self.interpolationPoints)
-
-        return " ".join[edgeType,v1Name,v2Name,points]
-
+        string =  " ".join([edge,v1Name,v2Name,points])
+        return string
 
     @classmethod
     def list_all(cls):
