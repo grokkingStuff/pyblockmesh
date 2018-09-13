@@ -1,13 +1,13 @@
 from collections.abc import MutableMapping
+
 class Vertex(MutableMapping):
-    def __init__(self, x=None, y=None, z=None, name=None, *args, **kw):
+    instances = []
+
+    def __init__(self, x=None, y=None, z=None, *args, **kw):
         if x is None or y is None or z is None:
             raise ValueError("(x,y,z) cannot contain null values")
-        self._storage = dict(x=x,y=y,z=z,name=name,*args, **kw)
-        self.x = self._storage["x"]
-        self.y = self._storage["y"]
-        self.z = self._storage["z"]
-        self.name = self._storage["name"]
+        self._storage = dict(x=x,y=y,z=z,name=None,*args, **kw)
+        Vertex.instances.append(self)
 
     def __getitem__(self, key):
         return self._storage[key]
@@ -40,3 +40,7 @@ class Vertex(MutableMapping):
                       self["y"] - other["y"],
                       self["z"] - other["z"])
 
+    @classmethod
+    def list_all(cls):
+        string = "\nvertices\n(" + "\n    " + "\n    ".join([str(vertex) for vertex in cls.instances]) + "\n)"
+        return string
