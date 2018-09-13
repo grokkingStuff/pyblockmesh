@@ -42,6 +42,8 @@ Python Library
 
 #+BEGIN_SRC python
 import pyblockmesh as pbm
+
+
 v0 = pbm.Vertex(-1,-1,-1)
 v1 = pbm.Vertex( 1,-1,-1)
 v2 = pbm.Vertex( 1, 1,-1)
@@ -52,6 +54,11 @@ v6 = pbm.Vertex( 1, 1, 1)
 v6 = pbm.Vertex(-1, 1, 1)
 
 h1 = pbm.Hexahedron([v0,v1,v2,v3,v4,v5,v6,v7])
+
+string = pdm.buildBlockMesh()
+blockMeshDict = open(“BlockMeshDict”,”w”)
+blockMeshDict.write(string) 
+
 #+END_SRC
 
 * Requirements
