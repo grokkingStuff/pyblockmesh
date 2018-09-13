@@ -1,19 +1,18 @@
 import setuptools
-from packagename.version import Version
 
 
 setuptools.setup(name='pyblockMesh',
-                 version=Version('0.0.1').number,
+                 version='0.0.1',
                  description='Python wrapper around blockMeshDict creation',
                  long_description=open('README.md').read().strip(),
                  author='Vishakh Kumar',
                  author_email='grokkingStuff@gmail.com',
-                 url='http://path-to-my-packagename',
+                 url='https://github.com/grokkingStuff/pyblockmesh',
                  py_modules=['pyblockmesh'],
-                 install_requires=['collections'],
+                 install_requires=[],
                  license='MIT License',
                  zip_safe=False,
-                 python_requires='>=3'
+                 python_requires='>=3',
                  keywords='blockmesh blockmeshdict openfoam pyfoam',
                  classifiers=[
                              # How mature is this project? Common values are

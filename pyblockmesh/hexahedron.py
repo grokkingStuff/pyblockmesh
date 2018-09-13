@@ -1,6 +1,6 @@
-import vertex as v
-import edge as e
-import face as f
+import pyblockmesh.vertex as v
+import pyblockmesh.edge as e
+import pyblockmesh.face as f
 
 from collections.abc import MutableMapping
 from collections import deque
