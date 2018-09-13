@@ -13,7 +13,7 @@ class Edge(MutableMapping):
                  vertex1,
                  vertex2,
                  expansionRatio = None,
-                 keyword = None,
+                 keyword = 'line',
                  interpolationPoints = [],
                  *args,**kwargs):
 
