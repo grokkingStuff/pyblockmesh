@@ -40,7 +40,7 @@ Python Library
 * Example
 
 
-#+BEGIN_SRC ipython :session pyblockmesh
+#+BEGIN_SRC python
 import pyblockmesh as pbm
 
 
@@ -54,17 +54,57 @@ v6 = pbm.Vertex( 1, 1, 1)
 v7 = pbm.Vertex(-1, 1, 1)
 
 h1 = pbm.Hexahedron([v0,v1,v2,v3,v4,v5,v6,v7],numberOfCells=[3,3,3])
+h1.add_edge(v0,v1,'line')
+h1.add_face([v0,v1,v2,v3],name='inlet',patchType='wall')
 
 string = pbm.buildBlockMesh()
 
 print(string)
-blockMeshDict = open("foo.txt", "wb")
+blockMeshDict = open("blockmeshdict.txt", "w")
 blockMeshDict.write(string) 
-
+blockMeshDict.close()
 #+END_SRC
 
 #+RESULTS:
-: # Out[1]:
+: None
+
+#+BEGIN_EXAMPLE
+vertices
+(
+    (-1 -1 -1)
+    (1 -1 -1)
+    (1 1 -1)
+    (-1 1 -1)
+    (-1 -1 1)
+    (1 -1 1)
+    (1 1 1)
+    (-1 1 1)
+)
+
+blocks
+(
+    hex 0 1 2 3 4 5 6 7 ( 3 3 3 )
+)
+
+edges
+(
+    line 0 1 
+)
+
+boundary
+(
+inlet
+{
+    type wall;
+    faces
+    (
+        ( 0 3 2 1 ) 
+    );
+}
+)
+#+END_EXAMPLE
+
+
 
 * Requirements
 
