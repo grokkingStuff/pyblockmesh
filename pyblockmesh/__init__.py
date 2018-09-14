@@ -7,5 +7,5 @@ def buildBlockMesh():
     v = Vertex.list_all()
     b = Hexahedron.list_all()
     e = Edge.list_all()
-    f = Face.list_all
+    f = Face.list_all()
     return "\n".join([v,b,e,f])
