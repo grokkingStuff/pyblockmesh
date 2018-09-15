@@ -2,7 +2,7 @@ import setuptools
 
 
 setuptools.setup(name='pyblockMesh',
-                 version='0.0.2',
+                 version='0.0.3',
                  description='Python wrapper around blockMeshDict creation',
                  long_description=open('README.org').read().strip(),
                  author='Vishakh Kumar',
