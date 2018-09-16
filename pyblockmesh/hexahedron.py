@@ -129,8 +129,8 @@ class Hexahedron(MutableMapping):
 
         # Ensure that the vertices are actually part of the hexahedron. This is important enough for us to throw an error.
         try:
-            indexv1 = list_of_vertices.index(edge["vertex1"])
-            indexv2 = list_of_vertices.index(edge["vertex2"])
+            indexv1 = list_of_vertices.index(edge["vertices"][0])
+            indexv2 = list_of_vertices.index(edge["vertices"][1])
 
             assert -1 < indexv1 < 8
             assert -1 < indexv2 < 8

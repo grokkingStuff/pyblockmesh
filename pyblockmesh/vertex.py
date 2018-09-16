@@ -1,4 +1,5 @@
 from collections.abc import MutableMapping
+import numpy as np
 
 class Vertex(MutableMapping):
     instances = []
@@ -6,6 +7,7 @@ class Vertex(MutableMapping):
     def __init__(self, x=None, y=None, z=None, *args, **kw):
         if x is None or y is None or z is None:
             raise ValueError("(x,y,z) cannot contain null values")
+        x, y, z = np.int64(x), np.int64(y), np.int64(z)
         self._storage = dict(x=x,y=y,z=z,name=None,*args, **kw)
         Vertex.instances.append(self)
 
@@ -18,9 +20,9 @@ class Vertex(MutableMapping):
     def __len__(self):
         return len(self._storage)
     def __iter__(self):
-        return iter(self._storage)
+        return iter([self["x"],self["y"],self["z"]])
     def __len__(self):
-        return len(self._storage)
+        return 3
     def __repr__(self):
         string = "("+str(self["x"])+" "+str(self["y"])+" "+str(self["z"])+")"
         return string
@@ -30,7 +32,6 @@ class Vertex(MutableMapping):
     def __add__(self, other):
         '''Adds a vertex, number or numpy array to a vertex together'''
 
-        from numbers import Number # Used to check if the variable 'other' is actually a number
         import numpy as np         # Used to add numpy arrays of length 3 to the vertex
 
         if isinstance(other, Vertex):
@@ -38,11 +39,6 @@ class Vertex(MutableMapping):
             return Vertex(self["x"] + other["x"],
                           self["y"] + other["y"],
                           self["z"] + other["z"])
-        elif isinstance(other, Number):
-            # Used to support Vertex(0,0,0) + 4
-            return Vertex(self['x'] + other,
-                          self['y'] + other,
-                          self['z'] + other)
         elif isinstance(other, list):
             # Used to support Vertex(0,0,0) + [1,2,3]
             assert len(other) is 3, "Length of list must be 3"
@@ -93,10 +89,18 @@ class Vertex(MutableMapping):
                       -self['z'])
     def __sub__(self,other):
         '''Implements subtraction. Refer __add__'''
-        other = other.__neg__()
+        try:
+            other = other.__neg__()
+        except AttributeError:
+            # Probably a list
+            other_list = []
+            for i in other:
+                i *= -1
+                other_list.append(i)
+            return self.__add__(other_list)
         return self.__add__(other)
     def __rsub__(self,other):
-        return self.__sub__(other)
+        return (self.__neg__()).__add__(other)
 
     def __mul__(self, other):
         ''' multiply self with other, e.g. Vertex(0,0,1) * 7 == Vertex(0,0,7) '''
@@ -182,8 +186,10 @@ class Vertex(MutableMapping):
     def __eq__(self, other):
         ''' Check for equality between vertices'''
         if type(other) is type(self):
-            if self["x"] is other["x"] and self["y"] is other["y"] and self["z"] is other["z"]:
-               return True
+            if self["x"] == other["x"] and self["y"] == other["y"] and self["z"] == other["z"]:
+                return True
+            else:
+                return False
         else:
             return False
 

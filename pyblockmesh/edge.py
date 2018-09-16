@@ -10,15 +10,13 @@ class Edge(MutableMapping):
     edgeTypes = Enum('edgeType', 'arc spline polyLine BSpline line')
 
     def __init__(self,
-                 vertex1,
-                 vertex2,
+                 vertices,
                  expansionRatio = None,
                  keyword = 'line',
                  interpolationPoints = [],
                  *args,**kwargs):
 
-        self._storage = dict(vertex1 = vertex1,
-                             vertex2 = vertex2,
+        self._storage = dict(verteices = vertices,
                              expansionRatio = expansionRatio,
                              keyword = keyword,
                              *args,**kwargs)
@@ -51,11 +49,11 @@ class Edge(MutableMapping):
     def __delitem__(self, key):
         del self._storage[key]
     def __len__(self):
-        return len(self._storage)
+        return 2
     def __repr__(self):
         edge = self["keyword"]
-        v1Name = self["vertex1"]["name"]
-        v2Name = self["vertex2"]["name"]
+        v1Name = self["vertices"][0]["name"]
+        v2Name = self["vertices"][1]["name"]
 
         if v1Name == None or v2Name == None:
             raise ValueError("vertices must have names before they can be represented")

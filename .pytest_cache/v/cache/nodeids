@@ -1,0 +1,15 @@
+[
+  "tests/test_edge_operations.py::TestInitialization::test_expansionRatio",
+  "tests/test_edge_operations.py::TestInitialization::test_keyword",
+  "tests/test_vertex_operations.py::TestInitialization::test_del",
+  "tests/test_vertex_operations.py::TestInitialization::test_initialization",
+  "tests/test_vertex_operations.py::TestInitialization::test_iter",
+  "tests/test_vertex_operations.py::TestInitialization::test_len",
+  "tests/test_vertex_operations.py::TestInitialization::test_repr",
+  "tests/test_vertex_operations.py::TestOperation::test_add",
+  "tests/test_vertex_operations.py::TestOperation::test_equal",
+  "tests/test_vertex_operations.py::TestOperation::test_gt",
+  "tests/test_vertex_operations.py::TestOperation::test_lt",
+  "tests/test_vertex_operations.py::TestOperation::test_mult",
+  "tests/test_vertex_operations.py::TestOperation::test_sub"
+]
