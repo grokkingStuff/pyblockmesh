@@ -25,9 +25,63 @@ class TestInitialization(unittest.TestCase):
         self.assertEqual(e1["keyword"],'line')
         self.assertEqual(e1["interpolationPoints"],[])
 
-        e2 = pbm.Edge([v1,v1],keyword='spline')
-        self.assertEqual(e2["keyword"],'spline')
+        e1 = pbm.Edge([v1,v1],keyword='spline')
+        self.assertEqual(e1["keyword"],'spline')
 
         with pytest.raises(ValueError):
-            e2 = pbm.Edge([v1,v1],keyword='Kenobi')
-            self.assertEqual(e2["keyword"],'spline')
+            e1 = pbm.Edge([v1,v1],keyword='Kenobi')
+            self.assertEqual(e1["keyword"],'spline')
+
+        e1 = pbm.Edge([v1,v2])
+        self.assertEqual(e1["keyword"],'line')
+        self.assertEqual(e1["interpolationPoints"],[])
+
+    def test_iter(self):
+        v1 = pbm.Vertex(1,2,3)
+        v2 = pbm.Vertex(1,4,3)
+
+        e1 = pbm.Edge([v1,v2])
+        for vertex in e1:
+            self.assertEqual(vertex in [v1,v2],True)
+
+    def test_del(self):
+        v1 = pbm.Vertex(1,2,3)
+        v2 = pbm.Vertex(3,4,2)
+
+        v1["name"]=0
+        v2["name"]=2
+
+        e1 = pbm.Edge([v1,v2])
+        e1["name"] = "Elizabeth"
+        e1.__delitem__("name")
+
+        with pytest.raises(KeyError):
+            self.assertEqual(e1["name"],"Elizabeth")
+
+    def test_len(self):
+        v1 = pbm.Vertex(1,2,3)
+        v2 = pbm.Vertex(1,4,3)
+
+        e1 = pbm.Edge([v1,v2])
+        self.assertEqual(len(e1),2)
+
+    def test_repr(self):
+        v1 = pbm.Vertex(1,2,3)
+        v2 = pbm.Vertex(1,4,3)
+
+        with pytest.raises(ValueError):
+            e1 = pbm.Edge([v1,v2])
+            self.assertEqual(str(e1),"Elizabeth")
+
+        v1["name"]=0
+        v2["name"]=2
+
+        e1 = pbm.Edge([v1,v2])
+        self.assertEqual(str(e1),"line 0 2")
+
+        v3 = pbm.Vertex(1,3,4)
+        e1 = pbm.Edge([v1,v2],keyword = 'arc',interpolationPoints = v3)
+        self.assertEqual(str(e1),"arc 0 2 (1 3 4)")
+
+        e1 = pbm.Edge([v1,v2],keyword = "spline",interpolationPoints = [v1,v2,v3])
+        self.assertEqual(str(e1),"spline 0 2 ( (1 2 3) (1 4 3) (1 3 4) )")
