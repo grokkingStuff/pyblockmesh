@@ -17,8 +17,6 @@ class Vertex(MutableMapping):
         self._storage[key] = value
     def __delitem__(self, key):
         del self._storage[key]
-    def __len__(self):
-        return len(self._storage)
     def __iter__(self):
         return iter([self["x"],self["y"],self["z"]])
     def __len__(self):
@@ -77,8 +75,6 @@ class Vertex(MutableMapping):
                               self['y'] + other[1][0],
                               self['z'] + other[2][0])
 
-            else:
-                raise ValueError("numpy array of shape %s cannot be added to a Vertex" % str(dimension))
 
     def __radd__(self,other):
         return self.__add__(other)
@@ -192,14 +188,3 @@ class Vertex(MutableMapping):
                 return False
         else:
             return False
-
-
-    @classmethod
-    def list_all(cls):
-        string = "\nvertices\n(" + "\n    " + "\n    ".join([str(vertex) for vertex in cls.instances]) + "\n)"
-        return string
-
-    @classmethod
-    def assign_names(cls):
-        for i,vertex in enumerate(cls.instances):
-            vertex["name"] = str(i)

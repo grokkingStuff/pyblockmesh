@@ -12,11 +12,11 @@ class Edge(MutableMapping):
     def __init__(self,
                  vertices,
                  expansionRatio = None,
-                 keyword = 'line',
+                 keyword = None,
                  interpolationPoints = [],
                  *args,**kwargs):
 
-        self._storage = dict(verteices = vertices,
+        self._storage = dict(vertices = vertices,
                              expansionRatio = expansionRatio,
                              keyword = keyword,
                              *args,**kwargs)
@@ -43,7 +43,7 @@ class Edge(MutableMapping):
     def __getitem__(self, key):
         return self._storage[key]
     def __iter__(self):
-        return iter(self._storage)
+        return iter(self["vertices"])
     def __setitem__(self, key, value):
         self._storage[key] = value
     def __delitem__(self, key):
@@ -58,8 +58,10 @@ class Edge(MutableMapping):
         if v1Name == None or v2Name == None:
             raise ValueError("vertices must have names before they can be represented")
 
+        v1Name = str(v1Name)
+        v2Name = str(v2Name)
 
-        if type(self["interpolationPoints"]) is type([]):
+        if isinstance(self["interpolationPoints"],list):
             if self["interpolationPoints"] != []:
                 # Multiple interpolation points
                 points = "( " + " ".join([str(point) for point in self["interpolationPoints"]]) + " )"
@@ -68,11 +70,6 @@ class Edge(MutableMapping):
                 points = ""
         else:
             # Single interpolationPoint
-            points = str(self.interpolationPoints)
+            points = str(self["interpolationPoints"])
         string =  " ".join([edge,v1Name,v2Name,points])
-        return string
-
-    @classmethod
-    def list_all(cls):
-        string = "\nedges\n(" + "\n    " + "\n    ".join([str(edge) for edge in cls.instances]) + "\n)"
-        return string
+        return string.rstrip()
