@@ -85,3 +85,28 @@ class TestInitialization(unittest.TestCase):
 
         e1 = pbm.Edge([v1,v2],keyword = "spline",interpolationPoints = [v1,v2,v3])
         self.assertEqual(str(e1),"spline 0 2 ( (1 2 3) (1 4 3) (1 3 4) )")
+
+    def test_eq(self):
+        v1 = pbm.Vertex(1,2,3)
+        v2 = pbm.Vertex(1,4,3)
+
+        e1 = pbm.Edge([v1,v2])
+        e2 = pbm.Edge([v1,v2])
+        self.assertEqual(e1,e2)
+
+        e2 = pbm.Edge([v1,v2+[1,2,3]])
+        self.assertEqual(e1 == e2, False)
+
+        e2 = "Elizabeth"
+        self.assertEqual(e1 == e2, False)
+
+        e2 = pbm.Edge([v1,v2],keyword='arc',interpolationPoints=v1+[1,0,0])
+        self.assertEqual(e1 == e2, False)
+
+        e1 = pbm.Edge([v1,v2],keyword='arc',interpolationPoints=v1)
+        self.assertEqual(e1 == e2, False)
+
+        e2 = pbm.Edge([v1,v2],expansionRatio = 2)
+        self.assertEqual(e1 == e2, False)
+
+
